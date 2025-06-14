@@ -1,34 +1,72 @@
-<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <!-- Define the blue gradient for the AI Symbol -->
     <defs>
-        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="ai_grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:#0db7ed;stop-opacity:1" />
             <stop offset="100%" style="stop-color:#0d67ed;stop-opacity:1" />
         </linearGradient>
     </defs>
+
+    <!-- Blue circular background -->
+    <circle cx="100" cy="100" r="100" fill="#2496ED" />
+
+    <!-- White Docker whale silhouette -->
     <path
-        d="M 50,50 
-           A 25,40 0 1,1 100,50
-           A 25,40 0 1,1 150,50
-           A 25,40 0 1,0 100,50
-           A 25,40 0 1,0 50,50 Z"
+        d="M 170,105 
+           C 170,125 150,140 130,140
+           L 50,140 
+           C 30,140 20,120 20,100 
+           S 30,60 50,60 
+           L 130,60 
+           C 150,60 170,75 170,95 Z"
+        fill="#FFFFFF"
+    />
+    <path 
+        d="M 170,105 
+           C 185,105 195,95 195,85 
+           S 185,65 170,65" 
         fill="none" 
-        stroke="url(#grad1)" 
-        stroke-width="12"
-    />
-    <path
-        d="M 35,25 H 75 L 45,75"
-        fill="none"
-        stroke="#FFFFFF"
-        stroke-width="16"
+        stroke="#FFFFFF" 
+        stroke-width="15" 
         stroke-linecap="round"
-        stroke-linejoin="round"
     />
-    <path
-        d="M 35,25 H 75 L 45,75"
-        fill="none"
-        stroke="url(#grad1)"
-        stroke-width="12"
+     <path 
+        d="M 170,105 
+           C 185,105 195,115 195,125 
+           S 185,145 170,145" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="15" 
         stroke-linecap="round"
-        stroke-linejoin="round"
     />
+
+    <!-- AI Symbol (7-Infinity) on the whale's back -->
+    <g transform="translate(50, 10) scale(0.6)">
+        <path
+            d="M 50,50 
+               A 25,40 0 1,1 100,50
+               A 25,40 0 1,1 150,50
+               A 25,40 0 1,0 100,50
+               A 25,40 0 1,0 50,50 Z"
+            fill="none" 
+            stroke="#FFFFFF" 
+            stroke-width="18"
+        />
+        <path
+            d="M 35,25 H 75 L 45,75"
+            fill="none"
+            stroke="#FFFFFF"
+            stroke-width="22"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        />
+        <path
+            d="M 35,25 H 75 L 45,75"
+            fill="none"
+            stroke="url(#ai_grad)"
+            stroke-width="16"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        />
+    </g>
 </svg> 
