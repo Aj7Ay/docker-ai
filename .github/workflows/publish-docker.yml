@@ -60,6 +60,9 @@ jobs:
       - name: Build the Debian package
         run: bash build_packages.sh
 
+      - name: List files to debug
+        run: ls -lR
+
       - name: Upload Debian package to release
         uses: svenstaro/upload-release-action@v2
         with:
