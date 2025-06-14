@@ -16,7 +16,9 @@
 
 Watch a quick demonstration of `docker-ai` in action.
 
-![Docker AI Demo](https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/.github/demo.gif)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/.github/demo.gif" alt="Docker AI Demo">
+</p>
 
 `docker-ai` is a command-line tool that makes it easier to work with Docker by translating natural language into executable commands. It also features a built-in learning mode to help beginners understand core Docker concepts without an internet connection.
 
