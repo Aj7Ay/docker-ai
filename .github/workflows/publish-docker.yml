@@ -50,11 +50,12 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Set release version in build script
+      - name: Set up build variables
+        id: build_vars
         run: |
-          # The tag is like 'v0.2.2', we just want '0.2.2'
           RELEASE_VERSION=${{ github.ref_name }}
           VERSION_NUMBER=${RELEASE_VERSION#v}
+          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
           sed -i "s/^VERSION=.*/VERSION=\"${VERSION_NUMBER}\"/" build_packages.sh
 
       - name: Build the Debian package
@@ -67,7 +68,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: docker-ai_*.deb
+          file: docker-ai_${{ env.VERSION_NUMBER }}_amd64.deb
           asset_name: docker-ai_${{ github.ref_name }}_amd64.deb
           tag: ${{ github.ref_name }}
           overwrite: true 
