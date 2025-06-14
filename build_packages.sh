@@ -3,7 +3,7 @@ set -e
 
 # --- Configuration ---
 APP_NAME="docker-ai"
-VERSION="0.1.0" # IMPORTANT: Update this version for new releases
+VERSION="0.2.0" # IMPORTANT: Update this version for new releases
 MAINTAINER="Ajay Kumar <postbox.aj99@gmail.com>" # IMPORTANT: Change this
 DESCRIPTION="An AI-powered CLI for Docker."
 HOMEPAGE="https://github.com/Aj7Ay/docker-ai"
