@@ -1,7 +1,7 @@
 # Docker AI
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/.github/logo.svg" alt="Docker AI Logo" width="150"/>
+  <img src="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/.github/se7en-ai.jpeg" alt="Docker AI Logo" width="250"/>
 </p>
 
 <p align="center">
