@@ -1,11 +1,11 @@
-name: Publish Docker Image
+name: Publish Docker Image and Debian Package
 
 on:
   release:
     types: [published]
 
 jobs:
-  build-and-publish:
+  build-and-publish-docker:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,4 +34,37 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }} 
+          labels: ${{ steps.meta.outputs.labels }}
+
+  build-and-upload-deb:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to upload release assets
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set release version in build script
+        run: |
+          # The tag is like 'v0.2.2', we just want '0.2.2'
+          RELEASE_VERSION=${{ github.ref_name }}
+          VERSION_NUMBER=${RELEASE_VERSION#v}
+          sed -i "s/^VERSION=.*/VERSION=\"${VERSION_NUMBER}\"/" build_packages.sh
+
+      - name: Build the Debian package
+        run: bash build_packages.sh
+
+      - name: Upload Debian package to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: docker-ai_*.deb
+          asset_name: docker-ai_${{ github.ref_name }}_amd64.deb
+          tag: ${{ github.ref_name }}
+          overwrite: true 
