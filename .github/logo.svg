@@ -1,70 +1,27 @@
 <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-    <!-- Define the blue gradient for the AI Symbol -->
-    <defs>
-        <linearGradient id="ai_grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#0db7ed;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#0d67ed;stop-opacity:1" />
-        </linearGradient>
-    </defs>
-
-    <!-- Blue circular background -->
+    <!-- Blue circular background, same as Docker -->
     <circle cx="100" cy="100" r="100" fill="#2496ED" />
 
-    <!-- White Docker whale silhouette -->
-    <path
-        d="M 170,105 
-           C 170,125 150,140 130,140
-           L 50,140 
-           C 30,140 20,120 20,100 
-           S 30,60 50,60 
-           L 130,60 
-           C 150,60 170,75 170,95 Z"
-        fill="#FFFFFF"
-    />
-    <path 
-        d="M 170,105 
-           C 185,105 195,95 195,85 
-           S 185,65 170,65" 
-        fill="none" 
-        stroke="#FFFFFF" 
-        stroke-width="15" 
-        stroke-linecap="round"
-    />
-     <path 
-        d="M 170,105 
-           C 185,105 195,115 195,125 
-           S 185,145 170,145" 
-        fill="none" 
-        stroke="#FFFFFF" 
-        stroke-width="15" 
-        stroke-linecap="round"
-    />
+    <!-- Whale Body, simplified and clean -->
+    <path d="M 25,100 C 25,75 40,60 65,60 L 145,60 C 165,60 175,75 175,90 L 175,110 C 175,125 165,140 145,140 L 65,140 C 40,140 25,125 25,100 Z" fill="#FFFFFF"/>
+    
+    <!-- Whale Tail -->
+    <path d="M175,90 C187,85 195,75 195,65" stroke="#FFFFFF" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M175,110 C187,115 195,125 195,135" stroke="#FFFFFF" stroke-width="18" fill="none" stroke-linecap="round"/>
 
-    <!-- AI Symbol (7-Infinity) on the whale's back -->
-    <g transform="translate(50, 10) scale(0.6)">
-        <path
-            d="M 50,50 
-               A 25,40 0 1,1 100,50
-               A 25,40 0 1,1 150,50
-               A 25,40 0 1,0 100,50
-               A 25,40 0 1,0 50,50 Z"
-            fill="none" 
-            stroke="#FFFFFF" 
-            stroke-width="18"
-        />
-        <path
-            d="M 35,25 H 75 L 45,75"
+    <!-- 7-Infinity symbol on the back -->
+    <g transform="translate(10, -5)">
+        <!-- Infinity Loop -->
+        <path d="M 85,60 A 20,20 0 1,0 85,100 A 20,20 0 1,0 85,60" fill="#FFFFFF"/>
+        <path d="M 135,60 A 20,20 0 1,0 135,100 A 20,20 0 1,0 135,60" fill="#FFFFFF"/>
+        <!-- Bridge of infinity -->
+        <path d="M 85,80 l 50,0" stroke="#FFFFFF" stroke-width="41" stroke-linecap="round" />
+        
+        <!-- The "7", drawn in the primary blue color to stand out -->
+        <path d="M 75,65 H 100 L 82,95"
             fill="none"
-            stroke="#FFFFFF"
-            stroke-width="22"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        />
-        <path
-            d="M 35,25 H 75 L 45,75"
-            fill="none"
-            stroke="url(#ai_grad)"
-            stroke-width="16"
+            stroke="#2496ED"
+            stroke-width="8"
             stroke-linecap="round"
             stroke-linejoin="round"
         />
