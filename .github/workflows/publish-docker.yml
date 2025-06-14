@@ -71,4 +71,48 @@ jobs:
           file: docker-ai_${{ env.VERSION_NUMBER }}_amd64.deb
           asset_name: docker-ai_${{ github.ref_name }}_amd64.deb
           tag: ${{ github.ref_name }}
-          overwrite: true 
+          overwrite: true
+
+  update-homebrew-tap:
+    runs-on: ubuntu-latest
+    needs: [build-and-publish-docker, build-and-upload-deb] # This job runs only after the others succeed
+    steps:
+      - name: Checkout Homebrew tap repository
+        uses: actions/checkout@v4
+        with:
+          repository: Aj7Ay/homebrew-tap
+          token: ${{ secrets.PAT_FOR_HOMEBREW_TAP }} # Use the PAT to allow pushing
+          path: homebrew-tap
+
+      - name: Calculate SHA256 of the new release tarball
+        id: shasum
+        run: |
+          RELEASE_URL="https://github.com/${{ github.repository }}/archive/refs/tags/${{ github.ref_name }}.tar.gz"
+          SHA256=$(curl -L $RELEASE_URL | shasum -a 256 | cut -d' ' -f1)
+          echo "sha256=${SHA256}" >> $GITHUB_ENV
+          echo "Calculated SHA256: ${SHA256}"
+
+      - name: Update Homebrew formula
+        run: |
+          cd homebrew-tap
+          RELEASE_VERSION="${{ github.ref_name }}"
+          # Update the url and sha256 lines in the formula file
+          sed -i "s|url \".*\"|url \"https://github.com/${{ github.repository }}/archive/refs/tags/${RELEASE_VERSION}.tar.gz\"|" docker-ai.rb
+          sed -i "s/sha256 \".*\"/sha256 \"${{ env.sha256 }}\"/" docker-ai.rb
+          echo "Formula updated."
+          cat docker-ai.rb
+
+      - name: Commit and push changes
+        run: |
+          cd homebrew-tap
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docker-ai.rb
+          # Check if there are changes to commit before committing
+          if git diff --staged --quiet; then
+            echo "No changes to the formula to commit."
+          else
+            git commit -m "Update docker-ai to ${{ github.ref_name }}"
+            git push
+            echo "Pushed updated formula to Homebrew tap."
+          fi 
