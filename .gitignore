@@ -1,0 +1,18 @@
+# Binaries
+/docker-ai
+
+# Build output
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Vendor
+/vendor/
+
+# IDE/editor
+.idea/
+.vscode/
+*.swp
+.DS_Store 
