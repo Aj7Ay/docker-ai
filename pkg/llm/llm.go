@@ -95,6 +95,14 @@ func QueryLLM(prompt, provider, model string) (string, error) {
     *   User: 'check logs'
     *   Assistant: 'There are multiple containers running: web-1, web-2, db-1. Which container''s logs do you want to see?'
 
+*   **System Prune (for cleaning unused resources)**
+    *   User: 'clean up docker resources'
+    *   Assistant: 'docker system prune'
+    *   User: 'clean up all unused docker resources with force'
+    *   Assistant: 'docker system prune -af'
+    *   User: 'remove unused images, containers, and volumes'
+    *   Assistant: 'docker system prune -a --volumes'
+
 *   **Stopping all containers**
     *   User: 'stop all containers'
     *   Assistant: 'docker stop $(docker ps -q)'`
