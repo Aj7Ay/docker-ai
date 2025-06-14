@@ -1,7 +1,11 @@
 # Docker AI
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/.github/se7en-ai.jpeg" alt="Docker AI Logo" width="250"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/.github/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/.github/se7en-ai.jpeg">
+    <img alt="Docker AI Logo" src="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/.github/se7en-ai.jpeg" width="250">
+  </picture>
 </p>
 
 <p align="center">
