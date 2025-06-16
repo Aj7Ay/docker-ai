@@ -2,6 +2,7 @@ package llm
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"google.golang.org/genai"
 )
 
 // LLMResponse represents a minimal OpenAI-compatible response
@@ -23,7 +26,31 @@ type LLMResponse struct {
 
 // QueryLLM sends a prompt to the configured LLM and returns the response.
 func QueryLLM(prompt, provider, model string) (string, error) {
+	systemPrompt := `You are a Docker expert. Your primary goal is to generate a single, executable Docker command based on the user's request.
+
+**Rules:**
+1.  **Use Provided Context:** You will be given a list of containers. You MUST use the names or IDs from this list.
+2.  **No Placeholders:** NEVER use placeholders like '<container_id_or_name>' or '$(docker ps -q)'. Your command must be immediately runnable.
+3.  **Docker Scout Commands:**
+    *   **Inspection:** For a "detailed", "vulnerability", or "CVE" report on an image, use 'docker scout cves <image>'. For a "quick" or "summary" view, use 'docker scout quickview <image>'. Do not invent subcommands like 'images'.
+    *   **Installation/Update:** If the user's request contains the words "install" or "update" in relation to 'docker scout', you MUST respond with only this exact text: To update Docker Scout, please run this command in your terminal: curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
+    *   **Other:** 'docker scout' by itself or with '--help' should be executed normally to show the help text.
+4.  **Always be specific.** If the user's request is ambiguous (e.g., "delete the container" when multiple exist), you MUST ask for clarification. Do not guess.
+5.  **Output format.** Respond with ONLY the Docker command, or a clarifying question. Nothing else. No explanations, no markdown.
+6.  **Detached mode.** When starting containers, ALWAYS use detached mode ('-d').
+7.  **Logging:** Do not use the '-f' (follow) flag for 'docker logs' unless the user explicitly asks for it. Default to showing the last 20 lines, e.g., 'docker logs --tail 20 <container>'.
+8.  **Scout and Model Runner:** The user has 'docker scout' and 'docker model' commands. For 'docker scout', the primary subcommands are 'cves', 'recommendations', and 'quickview', which are used with an image name (e.g., 'docker scout cves nginx'). Do not invent other subcommands like 'images'.
+
+**Examples:**
+- User: "show me all running containers" -> "docker ps"
+- User: "list all images" -> "docker images"
+- User: "delete the 'web-server' container" -> "docker rm web-server"
+- User: "show me the logs for 'api-gateway'" -> "docker logs --tail 20 api-gateway"
+- User: "what's the docker scout command to find vulnerabilities in the latest ubuntu image" -> "docker scout cves ubuntu:latest"
+- User: "how can i run a model from hugging face" -> "docker run --rm -it -p 8080:8080 -v ./data:/data ghcr.io/huggingface/text-generation-inference:latest --model-id gpt2"
+`
 	var apiKey, endpoint string
+
 	switch provider {
 	case "groq":
 		apiKey = os.Getenv("GROQ_API_KEY")
@@ -32,124 +59,112 @@ func QueryLLM(prompt, provider, model string) (string, error) {
 		}
 		endpoint = "https://api.groq.com/openai/v1/chat/completions"
 		if model == "" {
-			model = "gemma2-9b-it"
+			model = "gemma-3n-e4b-it"
 		}
+	case "gemini":
+		apiKey = os.Getenv("GEMINI_API_KEY")
+		if apiKey == "" {
+			return "", errors.New("GEMINI_API_KEY not set")
+		}
+		if model == "" {
+			model = "gemini-1.5-flash"
+		}
+		// Gemini uses its own Go SDK, not a simple HTTP endpoint
+		ctx := context.Background()
+		client, err := genai.NewClient(ctx, &genai.ClientConfig{
+			APIKey:  apiKey,
+			Backend: genai.BackendGeminiAPI,
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to create a new Gemini client: %w", err)
+		}
+
+		// Combine system prompt and user prompt, as some models don't support SystemInstruction
+		fullPrompt := fmt.Sprintf("%s\n\nUser: %s\nAssistant:", systemPrompt, prompt)
+
+		result, err := client.Models.GenerateContent(ctx, model, genai.Text(fullPrompt), nil)
+		if err != nil {
+			return "", fmt.Errorf("gemini content generation failed: %w", err)
+		}
+
+		if len(result.Candidates) == 0 || result.Candidates[0].Content == nil || len(result.Candidates[0].Content.Parts) == 0 {
+			return "", errors.New("gemini returned no content")
+		}
+
+		return result.Text(), nil
+
 	case "openai":
 		apiKey = os.Getenv("OPENAI_API_KEY")
 		if apiKey == "" {
 			return "", errors.New("OPENAI_API_KEY not set")
 		}
-		endpoint = os.Getenv("OPENAI_ENDPOINT")
-		if endpoint == "" {
-			endpoint = "https://api.openai.com/v1/chat/completions"
-		}
+		endpoint = "https://api.openai.com/v1/chat/completions"
 		if model == "" {
-			model = "gpt-3.5-turbo"
+			model = "gpt-4o"
 		}
 	default:
 		return "", fmt.Errorf("unsupported LLM provider: %s", provider)
 	}
 
-	systemPrompt := `You are a Docker expert. Your primary goal is to generate a single, executable Docker command based on the user's request.
-
-**Rules:**
-1.  **Always be specific.** If the user's request is ambiguous and could apply to more than one container, you MUST ask for clarification. Do not guess the container.
-2.  **Output format.** Respond with ONLY the Docker command, or a clarifying question. Nothing else. No explanations, no markdown.
-3.  **Detached mode.** When starting containers, ALWAYS use detached mode ('-d').
-4.  **No follow logs.** When showing logs, never use the follow ('-f') flag unless the user explicitly asks to 'follow' or 'stream' the logs.
-
-**Examples:**
-
-*   **Simple Command**
-    *   User: 'show running containers'
-    *   Assistant: 'docker ps'
-
-*   **Using Context**
-    *   Context: 'The currently running containers are: my-nginx, db-postgres'
-    *   User: 'show logs for the web server'
-    *   Assistant: 'docker logs my-nginx'
-
-*   **Viewing Specific Logs**
-    *   Context: 'The currently running containers are: my-api'
-    *   User: 'show me the last 20 logs for the api'
-    *   Assistant: 'docker logs --tail 20 my-api'
-
-*   **Vulnerability Scan**
-    *   User: 'scan the nginx image for vulnerabilities with scout'
-    *   Assistant: 'docker scout cves nginx'
-
-*   **List Models**
-    *   User: 'list my local models'
-    *   Assistant: 'docker model ls'
-
-*   **Run a Model**
-    *   User: 'run the smollm2 model'
-    *   Assistant: 'docker model run ai/smollm2'
-
-*   **Run an MCP Server**
-    *   User: 'run the file-reader mcp server'
-    *   Assistant: 'docker run -d --rm -v /:/context docker/mcp-file-reader:latest'
-
-*   **Ambiguous Request (MUST ask for clarification)**
-    *   Context: 'The currently running containers are: web-1, web-2, db-1'
-    *   User: 'check logs'
-    *   Assistant: 'There are multiple containers running: web-1, web-2, db-1. Which container''s logs do you want to see?'
-
-*   **System Prune (for cleaning unused resources)**
-    *   User: 'clean up docker resources'
-    *   Assistant: 'docker system prune'
-    *   User: 'clean up all unused docker resources with force'
-    *   Assistant: 'docker system prune -af'
-    *   User: 'remove unused images, containers, and volumes'
-    *   Assistant: 'docker system prune -a --volumes'
-
-*   **Stopping all containers**
-    *   User: 'stop all containers'
-    *   Assistant: 'docker stop $(docker ps -q)'`
-
-	body := map[string]interface{}{
+	// This part is for Groq and OpenAI (OpenAI-compatible APIs)
+	payload := map[string]interface{}{
 		"model": model,
 		"messages": []map[string]string{
 			{"role": "system", "content": systemPrompt},
 			{"role": "user", "content": prompt},
 		},
 		"temperature": 0.1,
-		"max_tokens": 50,
+		"max_tokens":  1024,
+		"top_p":       1,
+		"stream":      false,
 	}
-	b, _ := json.Marshal(body)
-	
-	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(b))
+
+	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return "", err
 	}
+
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return "", err
+	}
+
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		out, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("LLM API error: %s", string(out))
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("LLM API request failed with status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
-	var llmResp LLMResponse
-	if err := json.NewDecoder(resp.Body).Decode(&llmResp); err != nil {
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return "", err
 	}
-	if len(llmResp.Choices) == 0 {
-		return "", errors.New("no LLM response")
+
+	var llmResponse LLMResponse
+	if err := json.Unmarshal(body, &llmResponse); err != nil {
+		return "", err
 	}
-	content := strings.TrimSpace(llmResp.Choices[0].Message.Content)
-	
-	// Extract the Docker command if it's not already a clean command
-	if !strings.HasPrefix(content, "docker ") {
-		if cmd, found := ExtractDockerCommand(content); found {
-			content = cmd
-		}
+
+	if len(llmResponse.Choices) == 0 {
+		return "", errors.New("no response from LLM")
 	}
-	
-	return content, nil
+
+	// Clean up the response to remove markdown and extra quotes
+	response := llmResponse.Choices[0].Message.Content
+	response = strings.TrimSpace(response)
+	response = regexp.MustCompile("`{3}(bash|sh)?").ReplaceAllString(response, "")
+	response = strings.Trim(response, "`\n ")
+
+	return response, nil
 }
 
 // ExtractDockerCommand tries to find a docker command in the LLM response
@@ -164,7 +179,7 @@ func ExtractDockerCommand(response string) (string, bool) {
 			return cmd, true
 		}
 	}
-	
+
 	// If no backticks, try normal command
 	re = regexp.MustCompile(`(?m)^(docker[^\n]*)`)
 	match = re.FindStringSubmatch(response)
