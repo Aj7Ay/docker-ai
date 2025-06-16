@@ -82,6 +82,11 @@ brew install docker-ai
     export GEMINI_API_KEY="your-gemini-api-key"
     ```
 
+    For OpenAI:
+    ```sh
+    export OPENAI_API_KEY="your-openai-api-key"
+    ```
+
 2.  **Run `docker-ai`**:
 
     ```sh
