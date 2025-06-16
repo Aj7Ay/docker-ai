@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	SkipCleanupWarning bool `json:"skip_cleanup_warning"`
+	SkipCleanupWarning bool   `json:"skip_cleanup_warning"`
+	LastContainerName  string `json:"last_container_name"`
 }
 
 func GetConfigPath() (string, error) {

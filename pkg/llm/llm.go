@@ -24,6 +24,36 @@ type LLMResponse struct {
 	} `json:"choices"`
 }
 
+// queryGemini handles the request using the Gemini API
+func queryGemini(ctx context.Context, model, prompt, systemPrompt string) (string, error) {
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		return "", errors.New("GEMINI_API_KEY not set")
+	}
+
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  apiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create a new Gemini client: %w", err)
+	}
+
+	// Combine system prompt and user prompt
+	fullPrompt := fmt.Sprintf("%s\n\nUser: %s\nAssistant:", systemPrompt, prompt)
+
+	result, err := client.Models.GenerateContent(ctx, model, genai.Text(fullPrompt), nil)
+	if err != nil {
+		return "", fmt.Errorf("gemini content generation failed: %w", err)
+	}
+
+	if len(result.Candidates) == 0 || result.Candidates[0].Content == nil || len(result.Candidates[0].Content.Parts) == 0 {
+		return "", errors.New("gemini returned no content")
+	}
+
+	return result.Text(), nil
+}
+
 // QueryLLM sends a prompt to the configured LLM and returns the response.
 func QueryLLM(prompt, provider, model string) (string, error) {
 	systemPrompt := `You are a Docker expert. Your primary goal is to generate a single, executable Docker command based on the user's request.
@@ -62,37 +92,12 @@ func QueryLLM(prompt, provider, model string) (string, error) {
 			model = "gemma-3n-e4b-it"
 		}
 	case "gemini":
-		apiKey = os.Getenv("GEMINI_API_KEY")
-		if apiKey == "" {
-			return "", errors.New("GEMINI_API_KEY not set")
-		}
 		if model == "" {
 			model = "gemini-1.5-flash"
 		}
-		// Gemini uses its own Go SDK, not a simple HTTP endpoint
+		// Gemini uses its own Go SDK, so we'll call its function and return
 		ctx := context.Background()
-		client, err := genai.NewClient(ctx, &genai.ClientConfig{
-			APIKey:  apiKey,
-			Backend: genai.BackendGeminiAPI,
-		})
-		if err != nil {
-			return "", fmt.Errorf("failed to create a new Gemini client: %w", err)
-		}
-
-		// Combine system prompt and user prompt, as some models don't support SystemInstruction
-		fullPrompt := fmt.Sprintf("%s\n\nUser: %s\nAssistant:", systemPrompt, prompt)
-
-		result, err := client.Models.GenerateContent(ctx, model, genai.Text(fullPrompt), nil)
-		if err != nil {
-			return "", fmt.Errorf("gemini content generation failed: %w", err)
-		}
-
-		if len(result.Candidates) == 0 || result.Candidates[0].Content == nil || len(result.Candidates[0].Content.Parts) == 0 {
-			return "", errors.New("gemini returned no content")
-		}
-
-		return result.Text(), nil
-
+		return queryGemini(ctx, model, prompt, systemPrompt)
 	case "openai":
 		apiKey = os.Getenv("OPENAI_API_KEY")
 		if apiKey == "" {
