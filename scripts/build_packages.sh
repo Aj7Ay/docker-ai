@@ -2,16 +2,17 @@
 set -e
 
 # This script builds the debian package.
-# The VERSION argument is passed from the GitHub workflow.
-VERSION=${1#v} # a v prefix from the tag
+# The VERSION argument is passed from the GitHub workflow (e.g., v0.3.0)
+VERSION_TAG=${1} 
+VERSION_NUMBER=${1#v} # a v prefix from the tag
 
-if [ -z "$VERSION" ]; then
-    echo "Usage: $0 <version>"
+if [ -z "$VERSION_TAG" ]; then
+    echo "Usage: $0 <version_tag>"
     exit 1
 fi
 
-# Create the package structure
-DEB_DIR="docker-ai_${VERSION}_amd64"
+# Create the package structure using the full tag (e.g., docker-ai_v0.3.0_amd64)
+DEB_DIR="docker-ai_${VERSION_TAG}_amd64"
 mkdir -p "$DEB_DIR/usr/local/bin"
 mkdir -p "$DEB_DIR/DEBIAN"
 
@@ -22,7 +23,7 @@ GOOS=linux GOARCH=amd64 go build -o "$DEB_DIR/usr/local/bin/docker-ai" ./cmd/doc
 # Create the debian control file
 cat > "$DEB_DIR/DEBIAN/control" <<EOF
 Package: docker-ai
-Version: $VERSION
+Version: $VERSION_NUMBER
 Architecture: amd64
 Maintainer: Ajay <ajay@example.com>
 Description: An AI-powered CLI for Docker.
@@ -32,4 +33,7 @@ EOF
 echo "Building Debian package..."
 dpkg-deb --build "$DEB_DIR"
 
-echo "Package created: ${DEB_DIR}.deb" 
+# Rename the package to include the 'v' from the tag, for consistency
+mv "${DEB_DIR}.deb" "docker-ai_${VERSION_TAG}_amd64.deb"
+
+echo "Package created and renamed to: docker-ai_${VERSION_TAG}_amd64.deb" 
