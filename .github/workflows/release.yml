@@ -36,12 +36,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           body: ${{ steps.release_notes.outputs.notes }}
           name: Release ${{ github.ref_name }}
-          draft: true # Create a draft first
+          draft: true
           prerelease: false
 
   build-and-upload:
     runs-on: ubuntu-latest
     needs: create-release
+    permissions:
+      contents: read
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -68,6 +70,8 @@ jobs:
   update-homebrew-tap:
     runs-on: ubuntu-latest
     needs: build-and-upload
+    permissions:
+      contents: write
     steps:
       - name: Checkout Homebrew tap repository
         uses: actions/checkout@v4
@@ -104,11 +108,13 @@ jobs:
 
   publish-release:
     runs-on: ubuntu-latest
-    needs: update-homebrew-tap
+    needs: [create-release, update-homebrew-tap]
+    permissions:
+      contents: write
     steps:
       - name: Publish the release
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ needs.create-release.outputs.release_id }}
-          draft: false # This publishes the release 
+          draft: false 
