@@ -47,6 +47,7 @@ brew tap Aj7Ay/homebrew-tap
 Then, install `docker-ai`:
 
 ```sh
+brew update
 brew install docker-ai
 ```
 
@@ -99,6 +100,9 @@ brew install docker-ai
     You can specify a different provider and model with flags. If you only specify the provider, a sensible default model for that provider will be used.
 
     ```sh
+    # Use Groq with its default model (gpt-4o)
+    docker-ai --llm-provider=groq
+
     # Use OpenAI with its default model (gpt-4o)
     docker-ai --llm-provider=openai
 
