@@ -18,16 +18,16 @@ fi
 
 # Find the tag of the commit *before* the current tag. This is our "from" point.
 # If it fails (e.g., this is the very first tag), PREVIOUS_TAG will be empty.
-PREVIOUS_TAG=$(git describe --tags --abbrev=0 "v${CURRENT_TAG}^" 2>/dev/null || echo "")
+PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${CURRENT_TAG}^" 2>/dev/null || echo "")
 
 if [ -z "$PREVIOUS_TAG" ]; then
-    echo "No previous tag found. Generating notes for all commits up to v${CURRENT_TAG}."
+    echo "No previous tag found. Generating notes for all commits up to ${CURRENT_TAG}."
     # Get all commit messages from the very first commit up to the current tag
-    LOG_CMD="git log v${CURRENT_TAG} --pretty=format:'%B'"
+    LOG_CMD="git log ${CURRENT_TAG} --pretty=format:'%B'"
 else
-    echo "Generating notes from tag ${PREVIOUS_TAG} to v${CURRENT_TAG}."
+    echo "Generating notes from tag ${PREVIOUS_TAG} to ${CURRENT_TAG}."
     # Get all commit messages between the two tags.
-    LOG_CMD="git log ${PREVIOUS_TAG}..v${CURRENT_TAG} --pretty=format:'%B'"
+    LOG_CMD="git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:'%B'"
 fi
 
 # Use a temporary file to store logs to avoid issues with pipes and loops.
