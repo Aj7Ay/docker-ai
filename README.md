@@ -28,106 +28,96 @@ Watch a quick demonstration of `docker-ai` in action.
 
 ## Features
 
--   **AI Mode**: Translates natural language queries into Docker commands using providers like Groq or OpenAI.
--   **Learning Mode**: An offline, interactive shell to learn Docker fundamentals.
--   **Interactive Shell**: A chat-like interface for a fluid user experience.
--   **Command History**: Use up/down arrow keys to recall previous commands in both modes.
--   **Context-Aware**: The AI can recognize running containers to correctly target commands.
+-   **Interactive Shell**: An intuitive shell for running Docker commands.
+-   **AI-Powered Commands**: Generate Docker commands from natural language.
+-   **Learning Mode**: Learn Docker concepts without leaving your terminal.
+-   **Context-Aware**: The AI knows about your running containers.
+-   **Command History**: Easily access your previously used commands.
 
 ## Installation
 
-`docker-ai` is built with Go and requires Go 1.18 or higher to be installed on your system.
+### Homebrew (macOS)
 
-1.  **Clone the Repository**
+First, tap the repository:
+
+```sh
+brew tap Aj7Ay/homebrew-docker-ai
+```
+
+Then, install `docker-ai`:
+
+```sh
+brew install docker-ai
+```
+
+### From Source
+
+1.  Clone the repository:
     ```sh
     git clone https://github.com/Aj7Ay/docker-ai.git
     cd docker-ai
     ```
-
-2.  **Build the Binary**
-    This command compiles the source code into a single executable file named `docker-ai`.
+2.  Build the binary:
     ```sh
-    go build -o docker-ai ./cmd/docker-ai/main.go
+    go build -o docker-ai ./cmd/docker-ai
     ```
-
-3.  **Make it Executable (Optional but Recommended)**
-    To run `docker-ai` from anywhere on your system, move it to a directory that is in your system's `PATH`.
+3.  Move the binary to a directory in your `$PATH`:
     ```sh
-    # First, make sure the file is executable
-    chmod +x docker-ai
-
-    # Then, move it to a common location for binaries
     sudo mv docker-ai /usr/local/bin/
     ```
 
 ## Usage
 
-### AI Mode (Default)
+1.  **Set your API Key**:
 
-This is the default mode. It connects to an LLM provider to generate Docker commands.
+    `docker-ai` supports Groq, Gemini, and OpenAI. Set the appropriate environment variable for your chosen provider.
 
-1.  **Set Your API Key**
-    You need to provide an API key for the LLM provider you want to use.
+    For Groq:
     ```sh
-    # For Groq
     export GROQ_API_KEY="your-groq-api-key"
-
-    # For OpenAI
-    export OPENAI_API_KEY="your-openai-api-key"
     ```
 
-2.  **Run the Tool**
+    For Gemini:
     ```sh
-    # Run with default provider (Groq)
+    export GEMINI_API_KEY="your-gemini-api-key"
+    ```
+
+2.  **Run `docker-ai`**:
+
+    ```sh
     docker-ai
-
-    # Or specify a provider and model
-    docker-ai --llm-provider=openai --model=gpt-4
     ```
 
-3.  **Example Session**
-    ```
-    docker-ai> show running containers
-    ➜ executing: docker ps
-    CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+    You can specify the LLM provider and model with flags:
 
-    docker-ai> show me the last 10 logs for my_container
-    ➜ executing: docker logs --tail 10 my_container
-    ...
+    ```sh
+    docker-ai --llm-provider=gemini --model=gemini-1.5-pro
     ```
+
+    By default, `docker-ai` uses Groq with the `gemma2-9b-it` model.
 
 ### Learning Mode
 
-This mode works completely offline and is designed to teach Docker concepts.
+To use the offline learning mode, set the `DOCKER_AI_MODE` environment variable:
 
-1.  **Run in Learning Mode**
-    Set the `DOCKER_AI_MODE` environment variable to `learn`.
-    ```sh
-    DOCKER_AI_MODE=learn docker-ai
-    ```
-
-2.  **Example Session**
-    ```
-    Docker AI Learning Mode. Ask me questions about Docker!
-    learn-ai> what is a dockerfile?
-    A Dockerfile is like a recipe for baking a cake. The "cake" is your application's container image...
-
-    learn-ai> how to check all containers
-    To see your containers, you use the 'docker ps' command...
-    ```
+```sh
+export DOCKER_AI_MODE=learn
+docker-ai
+```
 
 ### Special Commands
 
-These commands work in both modes:
+-   `exit` or `quit`: Exit the interactive shell.
+-   `reset confirm`: Reset the confirmation prompt for cleanup commands.
 
--   `version`: Prints the current version of the tool.
--   `clear`: Clears the terminal screen.
--   `exit` or `quit`: Exits the interactive shell.
+## Configuration
+
+`docker-ai` will store a configuration file at `~/.docker-ai-config.json` to remember your preferences, such as skipping cleanup warnings.
 
 ## Contributing
 
-Contributions are welcome! If you have suggestions or find a bug, please open an issue.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-This project is licensed under the Apache-2.0 License. 
+This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details. 

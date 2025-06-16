@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"docker-ai/pkg/config"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"docker-ai/pkg/learning"
@@ -22,6 +25,12 @@ func main() {
 	}
 
 	runAIMode()
+}
+
+func isCleanupCommand(command string) bool {
+	// Regex to detect potentially destructive docker commands
+	cleanupRegex := regexp.MustCompile(`docker\s+(system|container|image|volume|network)\s+prune|docker\s+rm|docker\s+rmi|docker\s+volume\s+rm|docker\s+network\s+rm`)
+	return cleanupRegex.MatchString(command)
 }
 
 func runLearningMode() {
@@ -59,8 +68,13 @@ func runLearningMode() {
 }
 
 func runAIMode() {
+	appConfig, err := config.LoadConfig()
+	if err != nil {
+		fmt.Printf("Warning: could not load config file: %v\n", err)
+	}
+
 	modelPluginAvailable := true
-	llmProvider := flag.String("llm-provider", "groq", "LLM provider to use (groq, openai)")
+	llmProvider := flag.String("llm-provider", "groq", "LLM provider to use (groq, gemini, openai)")
 	model := flag.String("model", "gemma2-9b-it", "Model to use")
 	flag.Parse()
 
@@ -98,6 +112,16 @@ func runAIMode() {
 			break
 		}
 
+		if input == "reset confirm" {
+			appConfig.SkipCleanupWarning = false
+			if err := config.SaveConfig(appConfig); err != nil {
+				fmt.Println("Failed to save configuration:", err)
+			} else {
+				fmt.Println("Cleanup confirmation has been reset. You will be prompted before cleanup commands are run.")
+			}
+			continue
+		}
+
 		// Replace 'that container' with lastContainerName if present
 		userInput := input
 		if strings.Contains(input, "that container") && lastContainerName != "" {
@@ -106,12 +130,12 @@ func runAIMode() {
 
 		// Get running containers to provide context to the LLM
 		var fullPrompt string
-		psCmd := exec.Command("sh", "-c", "docker ps --format '{{.Names}}'")
+		psCmd := exec.Command("sh", "-c", "docker ps -a --format '{{.Names}} ({{.Status}})'")
 		psOutput, err := psCmd.CombinedOutput()
 		if err == nil && len(psOutput) > 0 {
 			containerList := strings.TrimSpace(string(psOutput))
 			containerList = strings.ReplaceAll(containerList, "\n", ", ")
-			fullPrompt = fmt.Sprintf("The user wants to perform a Docker command. Here are the currently running containers: %s.\n\nUser's request: %s", containerList, userInput)
+			fullPrompt = fmt.Sprintf("The user wants to perform a Docker command. Here is a list of all containers (running and stopped): %s.\n\nUser's request: %s", containerList, userInput)
 		} else {
 			fullPrompt = userInput
 		}
@@ -131,40 +155,107 @@ func runAIMode() {
 			continue
 		}
 
+		// Cleanup command confirmation
+		if isCleanupCommand(response) && !appConfig.SkipCleanupWarning {
+			fmt.Printf("WARNING: The generated command is a cleanup command:\n%s\n\n", response)
+
+			answer, err := line.Prompt("Are you sure you want to execute? [y]es, [n]o, [d]on't ask again: ")
+			if err != nil {
+				fmt.Println("Execution cancelled.")
+				continue
+			}
+			answer = strings.ToLower(strings.TrimSpace(answer))
+
+			switch answer {
+			case "y", "yes":
+				// continue to execution
+			case "d", "dont", "don't ask again":
+				appConfig.SkipCleanupWarning = true
+				if err := config.SaveConfig(appConfig); err != nil {
+					fmt.Println("Failed to save configuration:", err)
+				}
+				// continue to execution
+			default:
+				fmt.Println("Execution cancelled.")
+				continue
+			}
+		}
+
 		fmt.Printf("➜ executing: %s\n", response)
 
+		// Before running the command, close the liner to restore the terminal
+		line.Close()
+
 		// Execute the Docker command
+		var stderrBuf bytes.Buffer
 		cmd := exec.Command("sh", "-c", response)
-		output, err := cmd.CombinedOutput()
+		cmd.Stdin = os.Stdin // Pass the terminal's input to the command
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = io.MultiWriter(os.Stderr, &stderrBuf)
+		err = cmd.Run()
+
+		// After a command that takes over stdin, the terminal can be left in a
+		// "raw" state. We use `stty` to force it back to a sane mode before
+		// re-initializing the liner.
+		sttyCmd := exec.Command("stty", "-raw", "echo")
+		sttyCmd.Stdin = os.Stdin
+		_ = sttyCmd.Run()
+
+		// Re-initialize the liner to take back control of the terminal
+		line = liner.NewLiner()
+		line.SetCtrlCAborts(true)
+		if f, err := os.Open(historyFile); err == nil {
+			line.ReadHistory(f)
+			f.Close()
+		}
+
 		if err != nil {
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				if strings.Contains(string(output), "is not a docker command") && strings.Contains(response, "docker model") {
-					modelPluginAvailable = false
-					fmt.Println("Error: The 'docker model' command is not available.")
-					fmt.Println("Please ensure you have installed the Docker Model Runner plugin.")
-					fmt.Println("You can try installing it with: 'sudo apt-get update && sudo apt-get install docker-model-plugin'")
-					continue
+				// The command exited with a non-zero status.
+				// Stderr is already printed. We can analyze it from the buffer.
+				stderrString := stderrBuf.String()
+				if strings.Contains(response, "docker model") {
+					if strings.Contains(stderrString, "is not a docker command") {
+						modelPluginAvailable = false
+						fmt.Println("\nError: The 'docker model' command is not available.")
+						fmt.Println("Please ensure you have installed the Docker Model Runner plugin.")
+						fmt.Println("You can try installing it with: 'sudo apt-get update && sudo apt-get install docker-model-plugin'")
+					}
 				}
-				fmt.Printf("Error executing command: %s\n", exitErr)
-				fmt.Println(string(output))
+				// Check for docker scout update message
+				if strings.Contains(stderrString, "New version") && strings.Contains(stderrString, "available") {
+					fmt.Println("\nHint: A new version of Docker Scout is available.")
+					fmt.Println("To update it, you can run the following command in your terminal:")
+					fmt.Println("curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --")
+				}
+
+				fmt.Printf("\nCommand finished with error: %s\n", exitErr)
 			} else {
 				fmt.Printf("Error executing command: %v\n", err)
 			}
 			continue
 		}
 
-		fmt.Print(string(output))
+		// Since output is streamed, we don't print it again here.
 
 		// If the command was a 'docker run', get and store the container name
 		if strings.HasPrefix(response, "docker run") {
-			containerID := strings.TrimSpace(string(output))
-			if containerID != "" {
+			// With streaming, we can't just get the container ID from the output of this command.
+			// We will need a new way to get the container name.
+			// A simple approach is to list recent containers and assume the latest one is it.
+			getLatestContainerCmd := `docker ps -l -q`
+			getLatestCmd := exec.Command("sh", "-c", getLatestContainerCmd)
+			latestID, latestErr := getLatestCmd.Output()
+			if latestErr == nil && len(latestID) > 0 {
+				containerID := strings.TrimSpace(string(latestID))
 				inspectCmd := exec.Command("sh", "-c", fmt.Sprintf("docker inspect --format '{{.Name}}' %s | sed 's/^\\///'", containerID))
 				inspectOut, inspectErr := inspectCmd.CombinedOutput()
 				if inspectErr == nil {
 					lastContainerName = strings.TrimSpace(string(inspectOut))
+					fmt.Printf("\nContainer '%s' started.\n", lastContainerName)
 				}
 			}
+
 			statusCmd := exec.Command("sh", "-c", "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'")
 			statusOut, statusErr := statusCmd.CombinedOutput()
 			if statusErr == nil {

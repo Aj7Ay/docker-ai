@@ -1,0 +1,44 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger this workflow on tags like v0.1.0, v1.2.3, etc.
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          # Fetch all history so we can generate notes from the previous tag
+          fetch-depth: 0
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          # Make the script executable
+          chmod +x ./scripts/generate_release_notes.sh
+          # Run the script and store its output. The output is captured by using
+          # a special GitHub Actions syntax to set the step's output variable.
+          NOTES=$(./scripts/generate_release_notes.sh)
+          # This is a bit of a hack to make the multiline notes work in the next step
+          NOTES="${NOTES//'%'/'%25'}"
+          NOTES="${NOTES//$'\n'/'%0A'}"
+          NOTES="${NOTES//$'\r'/'%0D'}"
+          echo "notes=$NOTES" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          # The GITHUB_TOKEN is a secret automatically provided by GitHub Actions
+          # so you don't have to create it manually. It has permissions to
+          # create releases in your repository.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: ${{ steps.release_notes.outputs.notes }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
