@@ -49,3 +49,75 @@ Then, install `docker-ai`:
 ```sh
 brew install docker-ai
 ```
+
+### From Source
+
+1.  Clone the repository:
+    ```sh
+    git clone https://github.com/Aj7Ay/docker-ai.git
+    cd docker-ai
+    ```
+2.  Build the binary:
+    ```sh
+    go build -o docker-ai ./cmd/docker-ai
+    ```
+3.  Move the binary to a directory in your `$PATH`:
+    ```sh
+    sudo mv docker-ai /usr/local/bin/
+    ```
+
+## Usage
+
+1.  **Set your API Key**:
+
+    `docker-ai` supports Groq, Gemini, and OpenAI. Set the appropriate environment variable for your chosen provider.
+
+    For Groq:
+    ```sh
+    export GROQ_API_KEY="your-groq-api-key"
+    ```
+
+    For Gemini:
+    ```sh
+    export GEMINI_API_KEY="your-gemini-api-key"
+    ```
+
+2.  **Run `docker-ai`**:
+
+    ```sh
+    docker-ai
+    ```
+
+    You can specify the LLM provider and model with flags:
+
+    ```sh
+    docker-ai --llm-provider=gemini --model=gemini-1.5-pro
+    ```
+
+    By default, `docker-ai` uses Groq with the `gemma-3n-e4b-it` model.
+
+### Learning Mode
+
+To use the offline learning mode, set the `DOCKER_AI_MODE` environment variable:
+
+```sh
+export DOCKER_AI_MODE=learn
+docker-ai
+```
+
+### Special Commands
+
+-   `exit` or `quit`: Exit the interactive shell.
+-   `reset confirm`: Reset the confirmation prompt for cleanup commands.
+
+## Configuration
+
+`docker-ai` will store a configuration file at `~/.docker-ai-config.json` to remember your preferences, such as skipping cleanup warnings.
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## License
+
+This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
