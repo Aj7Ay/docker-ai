@@ -88,11 +88,8 @@ func QueryLLM(prompt, provider, model string) (string, error) {
 			return "", errors.New("GROQ_API_KEY not set")
 		}
 		endpoint = "https://api.groq.com/openai/v1/chat/completions"
-		if model == "" {
-			model = "gemma-3n-e4b-it"
-		}
 	case "gemini":
-		if model == "" {
+		if model == "gemma-3n-e4b-it" {
 			model = "gemini-1.5-flash"
 		}
 		// Gemini uses its own Go SDK, so we'll call its function and return
@@ -104,7 +101,7 @@ func QueryLLM(prompt, provider, model string) (string, error) {
 			return "", errors.New("OPENAI_API_KEY not set")
 		}
 		endpoint = "https://api.openai.com/v1/chat/completions"
-		if model == "" {
+		if model == "gemma-3n-e4b-it" {
 			model = "gpt-4o"
 		}
 	default:

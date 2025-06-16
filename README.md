@@ -89,17 +89,22 @@ brew install docker-ai
 
 2.  **Run `docker-ai`**:
 
+    By default, `docker-ai` uses the Groq provider with the `gemma-3n-e4b-it` model.
+
     ```sh
+    # This will use Groq by default
     docker-ai
     ```
 
-    You can specify the LLM provider and model with flags:
+    You can specify a different provider and model with flags. If you only specify the provider, a sensible default model for that provider will be used.
 
     ```sh
+    # Use OpenAI with its default model (gpt-4o)
+    docker-ai --llm-provider=openai
+
+    # Use Gemini with a specific model
     docker-ai --llm-provider=gemini --model=gemini-1.5-pro
     ```
-
-    By default, `docker-ai` uses Groq with the `gemma-3n-e4b-it` model.
 
 ### Learning Mode
 
