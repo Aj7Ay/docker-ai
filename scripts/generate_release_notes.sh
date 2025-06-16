@@ -9,17 +9,25 @@ FIX="🐛"
 HOTFIX="🔥"
 CHORE="🔨"
 
-# Get the latest tag, or an empty string if it doesn't exist.
-LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+# In a GitHub Action, GITHUB_REF_NAME will be set (e.g., 'refs/tags/v0.3.0')
+# We extract the tag name from it. For local runs, we just use the latest tag.
+CURRENT_TAG=${GITHUB_REF_NAME##*/v}
+if [ -z "$CURRENT_TAG" ]; then
+    CURRENT_TAG=$(git describe --tags --abbrev=0)
+fi
 
-if [ -z "$LATEST_TAG" ]; then
-    echo "No previous tag found, generating notes for all commits."
-    # Get all commit subjects from the very first commit.
-    LOG_CMD="git log --pretty=format:'%s'"
+# Find the tag of the commit *before* the current tag. This is our "from" point.
+# If it fails (e.g., this is the very first tag), PREVIOUS_TAG will be empty.
+PREVIOUS_TAG=$(git describe --tags --abbrev=0 "v${CURRENT_TAG}^" 2>/dev/null || echo "")
+
+if [ -z "$PREVIOUS_TAG" ]; then
+    echo "No previous tag found. Generating notes for all commits up to v${CURRENT_TAG}."
+    # Get all commit messages from the very first commit up to the current tag
+    LOG_CMD="git log v${CURRENT_TAG} --pretty=format:'%B'"
 else
-    echo "Generating notes from tag $LATEST_TAG to HEAD."
-    # Get all commit subjects since the last tag.
-    LOG_CMD="git log $LATEST_TAG..HEAD --pretty=format:'%s'"
+    echo "Generating notes from tag ${PREVIOUS_TAG} to v${CURRENT_TAG}."
+    # Get all commit messages between the two tags.
+    LOG_CMD="git log ${PREVIOUS_TAG}..v${CURRENT_TAG} --pretty=format:'%B'"
 fi
 
 # Use a temporary file to store logs to avoid issues with pipes and loops.
@@ -34,29 +42,29 @@ echo ""
 echo "## What's New"
 echo ""
 
-# Generate notes for each section if commits for it exist.
-
 # --- Features ---
-FEAT_COMMITS=$(grep "^feat:" "$TMP_LOG" || true)
+# Grep for lines that contain "feat:", case-insensitive
+FEAT_COMMITS=$(grep -i "feat:" "$TMP_LOG" || true)
 if [ -n "$FEAT_COMMITS" ]; then
     echo "### $FEAT Features"
-    echo "$FEAT_COMMITS" | sed 's/feat:/-/'
+    # Clean up the line, remove the prefix, trim whitespace, and prepend a dash
+    echo "$FEAT_COMMITS" | sed -e 's/.*feat://i' -e 's/^[[:space:]]*//' -e 's/^/- /'
     echo ""
 fi
 
 # --- Bug Fixes ---
-FIX_COMMITS=$(grep "^fix:" "$TMP_LOG" || true)
+FIX_COMMITS=$(grep -i "fix:" "$TMP_LOG" || true)
 if [ -n "$FIX_COMMITS" ]; then
     echo "### $FIX Bug Fixes"
-    echo "$FIX_COMMITS" | sed 's/fix:/-/'
+    echo "$FIX_COMMITS" | sed -e 's/.*fix://i' -e 's/^[[:space:]]*//' -e 's/^/- /'
     echo ""
 fi
 
 # --- Hotfixes ---
-HOTFIX_COMMITS=$(grep "^hotfix:" "$TMP_LOG" || true)
+HOTFIX_COMMITS=$(grep -i "hotfix:" "$TMP_LOG" || true)
 if [ -n "$HOTFIX_COMMITS" ]; then
     echo "### $HOTFIX Hotfixes"
-    echo "$HOTFIX_COMMITS" | sed 's/hotfix:/-/'
+    echo "$HOTFIX_COMMITS" | sed -e 's/.*hotfix://i' -e 's/^[[:space:]]*//' -e 's/^/- /'
     echo ""
 fi
 
