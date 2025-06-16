@@ -41,7 +41,7 @@ Watch a quick demonstration of `docker-ai` in action.
 First, tap the repository:
 
 ```sh
-brew tap Aj7Ay/homebrew-docker-ai
+brew tap Aj7Ay/homebrew-tap
 ```
 
 Then, install `docker-ai`:
@@ -94,7 +94,7 @@ brew install docker-ai
     docker-ai --llm-provider=gemini --model=gemini-1.5-pro
     ```
 
-    By default, `docker-ai` uses Groq with the `gemma2-9b-it` model.
+    By default, `docker-ai` uses Groq with the `gemma-3n-e4b-it` model.
 
 ### Learning Mode
 
