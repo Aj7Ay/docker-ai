@@ -73,6 +73,8 @@ fi
 OTHER_COMMITS=$(grep -v -e "^feat:" -e "^fix:" -e "^hotfix:" "$TMP_LOG" || true)
 if [ -n "$OTHER_COMMITS" ]; then
     echo "### $CHORE Other Changes"
-    echo "$OTHER_COMMITS" | sed 's/^/* /'
+    # Format multi-line commit messages correctly.
+    # The first line of a commit gets a bullet, subsequent lines are indented.
+    echo "$OTHER_COMMITS" | awk 'BEGIN{first=1} /^$/{first=1; next} {if(first){print "* " $0; first=0} else {print "  " $0}}'
     echo ""
 fi 
