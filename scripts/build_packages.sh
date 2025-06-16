@@ -33,7 +33,4 @@ EOF
 echo "Building Debian package..."
 dpkg-deb --build "$DEB_DIR"
 
-# Rename the package to include the 'v' from the tag, for consistency
-mv "${DEB_DIR}.deb" "docker-ai_${VERSION_TAG}_amd64.deb"
-
-echo "Package created and renamed to: docker-ai_${VERSION_TAG}_amd64.deb" 
+echo "Package created: ${DEB_DIR}.deb" 
