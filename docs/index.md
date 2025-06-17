@@ -6,9 +6,9 @@ Instead of memorizing complex Docker commands, you can simply tell `docker-ai` w
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/assets/logo-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/assets/se7en-ai.jpeg">
-    <img alt="docker-ai logo" src="https://raw.githubusercontent.com/Aj7Ay/docker-ai/main/assets/se7en-ai.jpeg" width="400">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/se7en-ai.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/se7en-ai.jpeg">
+    <img alt="docker-ai logo" src="assets/se7en-ai.jpeg" width="400">
   </picture>
 </p>
 
@@ -17,7 +17,7 @@ Instead of memorizing complex Docker commands, you can simply tell `docker-ai` w
 </p>
 
 <p align="center">
-  <img alt="Demo GIF" src="https://raw.githubusercontent.com/syedhabeeb/docker-aj/main/assets/demo.gif">
+  <img alt="Demo GIF" src="assets/demo.gif">
 </p>
 
 

@@ -4,17 +4,24 @@ You can install `docker-ai` using one of the methods below.
 
 ## Homebrew (macOS & Linux)
 
-If you are on macOS or Linux and use Homebrew, you can install `docker-ai` from our custom tap:
+First, tap the repository:
 
-```bash
-brew install syedhabeeb/tap/docker-ai
+```sh
+brew tap Aj7Ay/homebrew-tap
+```
+
+Then, install `docker-ai`:
+
+```sh
+brew update
+brew install docker-ai
 ```
 
 ## Debian/Ubuntu (.deb package)
 
 For Debian-based Linux distributions like Ubuntu, you can download the latest `.deb` package from our GitHub Releases page and install it using `dpkg`.
 
-1.  Go to the [**Releases Page**](https://github.com/syedhabeeb/docker-aj/releases).
+1.  Go to the [**Releases Page**](https://github.com/Aj7Ay/docker-ai/releases).
 2.  Download the `.deb` file from the latest release (e.g., `docker-ai_0.2.5_amd64.deb`).
 3.  Install the package:
 
@@ -32,9 +39,16 @@ sudo apt-get install -f
 
 You can also build `docker-ai` from source if you have a Go environment set up.
 
-```bash
-git clone https://github.com/syedhabeeb/docker-aj.git
-cd docker-aj
-go build ./cmd/docker-ai
-```
-This will create a `docker-ai` binary in the project directory. 
+1.  Clone the repository:
+    ```sh
+    git clone https://github.com/Aj7Ay/docker-ai.git
+    cd docker-ai
+    ```
+2.  Build the binary:
+    ```sh
+    go build -o docker-ai ./cmd/docker-ai
+    ```
+3.  Move the binary to a directory in your `$PATH`:
+    ```sh
+    sudo mv docker-ai /usr/local/bin/
+    ``` 
