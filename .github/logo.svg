@@ -19,11 +19,11 @@
         
         <!-- The "7", drawn in the primary blue color to stand out -->
         <path d="M 75,65 H 100 L 82,95"
-            fill="none"
+        fill="none" 
             stroke="#2496ED"
             stroke-width="8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        />
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    />
     </g>
 </svg> 

@@ -1,0 +1,48 @@
+site_name: docker-ai
+site_url: https://Aj7Ay.github.io/docker-ai/
+repo_url: https://github.com/Aj7Ay/docker-ai
+repo_name: Aj7Ay/docker-ai
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/se7en-ai.jpeg
+  favicon: assets/se7en-ai.jpeg
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - 'Introduction': 'index.md'
+  - 'Installation': 'installation.md'
+  - 'LLM Providers': 'llm-providers.md'
+  - 'CLI Reference': 'cli-reference.md'
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Aj7Ay/docker-ai
+    - icon: fontawesome/brands/x
+      link: https://x.com/Se7en_aj
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/ajay-kumar-yegireddi-cloudbook/
+    - icon: fontawesome/brands/youtube
+      link: https://www.youtube.com/@mr.cloudbook 
