@@ -6,9 +6,9 @@ Instead of memorizing complex Docker commands, you can simply tell `docker-ai` w
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/se7en-ai.dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="assets/se7en-ai.jpeg">
-    <img alt="docker-ai logo" src="assets/se7en-ai.jpeg" width="400">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.png">
+    <img alt="docker-ai logo" src="assets/logo-light.png" width="400">
   </picture>
 </p>
 

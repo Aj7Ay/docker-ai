@@ -6,8 +6,8 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
-  logo: assets/se7en-ai.jpeg
-  favicon: assets/se7en-ai.jpeg
+  logo: assets/logo-light.png
+  favicon: assets/logo-light.png
   features:
     - navigation.tabs
     - navigation.sections
